@@ -1,107 +1,86 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext.jsx';
-import Navbar from './components/Navbar.jsx';
-import ProtectedRoute from './components/ProtectedRoute.jsx';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import Courses from './pages/Courses.jsx';
-import CreateCourse from './pages/CreateCourse.jsx';
-import EnrolledCourses from './pages/EnrolledCourses.jsx';
-import MyCourses from './pages/MyCourses.jsx';
-import CourseDetails from './pages/CourseDetails.jsx';
-import Profile from './pages/Profile.jsx';
-import AdminUsers from './pages/AdminUsers.jsx';
+import Home from './pages/Home';
+import Courses from './pages/Courses';
+import EnrolledCourses from './pages/EnrolledCourses';
+import Faculty from './pages/Faculty';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
+import CourseDetails from './pages/CourseDetails';
+import Profile from './pages/Profile';
+// ... imports ...
+import AppLayout from './components/layout/AppLayout';
+import Hero from './pages/Home';
+import Landing from './pages/Landing';
+
+// Inside Routes:
+<Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute>
+      <AppLayout>
+        <Dashboard />
+      </AppLayout>
+    </ProtectedRoute>
+  }
+/>
+// Do same for /profile, /enrolled, etc.
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Navbar />
-        <div className="container mx-auto p-4 md:p-8 min-h-screen">
-          <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <main className="container mx-auto px-4 py-8">
+            <Routes>
+              {/* Public pages */}
+             <Route path="/" element={<Landing />} />
+              <Route path="/courses" element={<Courses />} />
+              <Route path="/course/:id" element={<CourseDetails />} />
+              <Route path="/faculty" element={<Faculty />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-            {/* Protected routes - only visible after login */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
+              {/* Protected routes – require login */}
+              <Route
+                path="/enrolled"
+                element={
+                  <ProtectedRoute>
+                    <EnrolledCourses />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                }
+              />
 
-            <Route
-              path="/courses"
-              element={
-                <ProtectedRoute>
-                  <Courses />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/create-course"
-              element={
-                <ProtectedRoute>
-                  <CreateCourse />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/enrolled-courses"
-              element={
-                <ProtectedRoute>
-                  <EnrolledCourses />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/my-courses"
-              element={
-                <ProtectedRoute>
-                  <MyCourses />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/course/:id"
-              element={
-                <ProtectedRoute>
-                  <CourseDetails />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute>
-                  <AdminUsers />
-                </ProtectedRoute>
-              }
-            />
-
-            {/* Default route */}
-            <Route path="*" element={<Login />} />
-          </Routes>
+              {/* Redirect unknown paths to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
         </div>
       </AuthProvider>
     </Router>

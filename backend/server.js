@@ -17,7 +17,8 @@ const courseRoutes = require("./routes/courseRoutes");
 app.use("/api/courses", courseRoutes);
 const enrollmentRoutes = require("./routes/enrollmentRoutes");
 app.use("/api/enrollments", enrollmentRoutes);
-
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use('/api/dashboard', dashboardRoutes);
 // Test routes
 app.get("/", (req, res) => {
   res.send("EduNova LMS API Running");
@@ -26,6 +27,8 @@ const protect = require("./middleware/authMiddleware");
 app.get("/api/protected", protect, (req, res) => {
   res.json({ message: "Protected route accessed", user: req.user });
 });
+const commentRoutes = require('./routes/commentRoutes');
+app.use('/api/comments', commentRoutes);
 
 // Global error handler (new)
 app.use((err, req, res, next) => {

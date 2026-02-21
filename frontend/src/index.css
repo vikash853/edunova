@@ -1,46 +1,42 @@
+/* 1. Import Google Font (Inter) - must come BEFORE Tailwind */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* 2. Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: linear-gradient(to bottom right, #f0f4ff, #e0e7ff);
+/* 3. Global resets & custom base styles */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 0 0% 100%;
+  }
+
+  body {
+    @apply bg-gradient-to-br from-gray-50 to-indigo-50/30 dark:from-gray-950 dark:to-indigo-950/30;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #111827;
+    margin: 0;
+  }
+
+  .dark body {
+    color: #f3f4f6;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
-.container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.form-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  max-width: 400px;
-  margin: 4rem auto;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 0.75rem;
-  margin: 0.5rem 0;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-}
-
-button {
-  width: 100%;
-  padding: 0.75rem;
-  background: #6366f1;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #4f46e5;
+/* 4. Custom components (optional) */
+@layer components {
+  .glass-card {
+    @apply bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-2xl shadow-xl;
+  }
 }
