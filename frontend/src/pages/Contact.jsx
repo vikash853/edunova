@@ -1,64 +1,74 @@
-import React from 'react';
+// src/pages/Contact.jsx
+import React, { useState } from 'react';
 
 const Contact = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Mock submit - replace with api.post('/contact')
+    console.log({ name, email, message });
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 3000); // Reset after 3s
+  };
+
   return (
-    <div className="py-12 max-w-3xl mx-auto px-4">
+    <div className="py-12 max-w-3xl mx-auto px-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
       <h1 className="text-4xl font-bold text-center mb-10 text-indigo-700 dark:text-indigo-300">
         Contact Us
       </h1>
-
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-        <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 text-center">
-          We'd love to hear from you! Whether you have a question, feedback, or just want to say hi.
-        </p>
-
-        <form className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Your Name
-            </label>
-            <input
-              type="text"
-              className="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="John Doe"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              className="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="your@email.com"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Message
-            </label>
-            <textarea
-              rows="5"
-              className="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-              placeholder="How can we help you today?"
-            ></textarea>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition"
-          >
-            Send Message
-          </button>
-        </form>
-
-        <div className="mt-10 text-center text-gray-600 dark:text-gray-400">
-          <p>Or email us directly at: <strong>support@edunova.com</strong></p>
-          <p className="mt-2">We usually reply within 24 hours.</p>
-          
+      <p className="text-lg text-gray-700 dark:text-gray-300 mb-8 text-center">
+        Have questions or feedback? Reach out — we're here to help!
+      </p>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-4 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition"
+            placeholder="John Doe"
+            required
+          />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-4 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition"
+            placeholder="your@email.com"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message</label>
+          <textarea
+            rows="6"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="w-full p-4 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 transition"
+            placeholder="How can we assist you?"
+            required
+          ></textarea>
+        </div>
+        <button
+          type="submit"
+          className="w-full bg-indigo-600 text-white py-4 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-md"
+        >
+          Send Message
+        </button>
+      </form>
+      {submitted && <p className="mt-4 text-center text-green-500">Message sent successfully! (Mock)</p>}
+      <div className="mt-12 text-center text-gray-600 dark:text-gray-400">
+        <p>Email: support@edunova.com</p>
+        <p className="mt-2">Location: Lucknow, Uttar Pradesh, India</p>
+        <p className="mt-2">We respond within 24-48 hours.</p>
       </div>
     </div>
   );

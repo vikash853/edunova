@@ -1,17 +1,24 @@
+// backend/routes/dashboardRoutes.js
 const express = require('express');
 const router = express.Router();
 const protect = require('../middleware/authMiddleware');
 
-// Mock stats for now (expand with real data)
+// Mock dashboard stats (you can expand later with real DB queries)
 router.get('/stats', protect, (req, res) => {
   const mockStats = {
-    progress: [
-      { name: 'Week 1', value: 20 },
-      { name: 'Week 2', value: 50 },
-      { name: 'Week 3', value: 80 },
+    enrolledCount: 3,           // replace with real count later
+    completedCount: 1,
+    overallProgress: 45,
+    recentActivity: [
+      { course: 'React Masterclass', action: 'Completed Module 4', date: '2026-02-20' },
+      { course: 'Python for Data Science', action: 'Started Quiz 2', date: '2026-02-18' },
     ],
-    notifications: ['New course available!', 'Deadline approaching for Quiz 1'],
+    notifications: [
+      'New course "Advanced Tailwind" available!',
+      'Quiz deadline approaching in 2 days',
+    ],
   };
+
   res.json(mockStats);
 });
 

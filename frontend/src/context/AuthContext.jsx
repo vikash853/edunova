@@ -1,51 +1,83 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api.js';
+import api from '../api';
+
 export const AuthContext = createContext();
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
   useEffect(() => {
     const loadUser = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const res = await api.get('/auth/me');
-          setUser(res.data);
-        } catch {
-          localStorage.removeItem('token');
-        }
+
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const res = await api.get('/auth/me');
+        setUser(res.data);
+      } catch (err) {
+        console.warn("Failed to load user from token:", err?.response?.status, err?.message);
+        // Most common: 401 = invalid/expired token → clean up silently
+        localStorage.removeItem('token');
+        setUser(null);
+        // Optional: only redirect if you're on a protected page
+        // if (window.location.pathname.startsWith('/dashboard') || ...) navigate('/login');
+      } finally {
+        setLoading(false);
+      }
     };
+
     loadUser();
   }, []);
+
   const login = async (email, password) => {
     try {
       const res = await api.post('/auth/login', { email, password });
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
+      const { token, user } = res.data;
+
+      if (!token || !user) {
+        throw new Error("Invalid response from server");
+      }
+
+      localStorage.setItem('token', token);
+      setUser(user);
       navigate('/dashboard');
     } catch (err) {
-      alert('Login failed: ' + (err.response?.data?.message || 'Error'));
+      console.error("Login failed:", err);
+      alert('Login failed: ' + (err.response?.data?.message || 'Please check your credentials'));
     }
   };
+
   const register = async (name, email, password, role) => {
     try {
       const res = await api.post('/auth/register', { name, email, password, role });
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
+      const { token, user } = res.data;
+
+      if (!token || !user) {
+        throw new Error("Invalid response from server");
+      }
+
+      localStorage.setItem('token', token);
+      setUser(user);
       navigate('/dashboard');
     } catch (err) {
-      alert('Register failed: ' + (err.response?.data?.message || 'Error'));
+      console.error("Register failed:", err);
+      alert('Registration failed: ' + (err.response?.data?.message || 'Server error'));
     }
   };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
     navigate('/login');
   };
+
   const updateUser = async (data) => {
     try {
       const res = await api.put('/auth/update', data);
@@ -55,9 +87,10 @@ export const AuthProvider = ({ children }) => {
       alert('Update failed: ' + (err.response?.data?.message || 'Error'));
     }
   };
+
   return (
     <AuthContext.Provider value={{ user, login, register, logout, loading, updateUser }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };
