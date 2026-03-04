@@ -6,7 +6,7 @@ const TEACHERS = [
   {
     name: "DR.Shatrughan ",
     role: "PHD in True Love",
-    image: "public/images/Amar.jpg",
+    image: "/images/Amar.jpg",
     bio: "PhD in AI from MIT. Pioneered adaptive learning algorithms adopted by 3 Fortune 500 companies.",
     tag: "MBA, PhD",
     courses: 24,
@@ -19,7 +19,7 @@ const TEACHERS = [
   {
     name: "Abella Danger",
     role: "Cuddle Expert & JS Wizard",
-    image: "public/images/abella.jpg",
+    image: "images/abella.jpg",
     bio: "Full-stack engineer turned educator. Built viral JS courses with 6k+ active learners worldwide.",
     tag: "Full Stack",
     courses: 18,
