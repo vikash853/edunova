@@ -10,7 +10,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',                // local dev (Vite default)
     'http://localhost:3000',
-    'https://edunova-opal.vercel.app',      // your live Vercel frontend
+    'https://edunova-frontend-rtyq.onrender.com',      // your live Vercel frontend
   ],
   credentials: true,                        // allow cookies/headers
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
