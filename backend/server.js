@@ -8,14 +8,14 @@ const app = express();
 // ── CORS ── (this is the most important fix for login/register)
 app.use(cors({
   origin: [
-    'http://localhost:5173',                // local dev (Vite default)
-    'http://localhost:3000',
-    'https://edunova-frontend-rtyq.onrender.com',      // your live Vercel frontend
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://edunova-frontend-rtyq.onrender.com"
   ],
-  credentials: true,                        // allow cookies/headers
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
 }));
+
+app.options("*", cors());
 
 // Body parser
 app.use(express.json());
