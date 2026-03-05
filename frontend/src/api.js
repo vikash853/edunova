@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://edunova-backend-wr3u.onrender.com',
+  baseURL: 'https://edunova-backend-wr3u.onrender.com/api',
 });
 
 api.interceptors.request.use((config) => {
