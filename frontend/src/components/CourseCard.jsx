@@ -1,14 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, BookOpen, Users, Tag as TagIcon } from 'lucide-react';
 import Button from '../components/common/Button';
 import { useNavigate } from 'react-router-dom';
-import api from '../api'; // your axios instance
+import api from '../api';
 
 const CourseCard = ({ course, enrolledMode = false }) => {
   const navigate = useNavigate();
   const [hover, setHover] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [enrollStatus, setEnrollStatus] = useState(null); // null | 'success' | 'error'
   const cardRef = useRef(null);
 
   const rating = course.rating || 4.8;
@@ -24,16 +26,24 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   };
 
   const handleEnroll = async (e) => {
-    e.stopPropagation(); // Prevent card click navigation
+    e.stopPropagation();
+    e.preventDefault();
+
+    setIsEnrolling(true);
+    setEnrollStatus(null);
 
     try {
-      // Call your real enrollment API
-      await api.post(`/enrollments/${course._id}`);
-      alert('Successfully enrolled!');
-      navigate(`/course/${course._id}`);
+      const res = await api.post(`/enrollments/${course._id}`);
+      setEnrollStatus('success');
+      alert('Successfully enrolled! Redirecting...');
+      setTimeout(() => navigate(`/course/${course._id}`), 1500);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Enrollment failed';
+      const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
+      console.error('Enroll error:', err.response);
+      setEnrollStatus('error');
       alert(msg);
+    } finally {
+      setIsEnrolling(false);
     }
   };
 
@@ -48,9 +58,9 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onMouseMove={handleMouseMove}
-      onClick={() => navigate(`/course/${course._id}`)} // Card click goes to course detail
+      onClick={() => navigate(`/course/${course._id}`)}
     >
-      {/* Spotlight hover effect */}
+      {/* Spotlight */}
       {hover && (
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
@@ -60,33 +70,18 @@ const CourseCard = ({ course, enrolledMode = false }) => {
         />
       )}
 
-      {/* Gradient border glow on hover */}
-      <div
-        className={`absolute inset-0 rounded-3xl pointer-events-none transition-all duration-500 ${
-          hover ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
-        }`}
-        style={{
-          background: 'linear-gradient(45deg, #6366f1, #a78bfa, #c084fc)',
-          filter: 'blur(8px)',
-          zIndex: -1,
-        }}
-      />
-
-      {/* Image Section */}
+      {/* Image */}
       <div className="relative h-56 overflow-hidden">
         <img
           src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'}
           alt={course.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800';
-          }}
+          onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
         {/* Price Badge */}
-        <div
-          className="absolute top-4 right-4 px-4 py-2 rounded-full font-bold text-white shadow-lg transform group-hover:scale-110 transition-transform"
+        <div className="absolute top-4 right-4 px-4 py-2 rounded-full font-bold text-white shadow-lg transform group-hover:scale-110 transition-transform"
           style={{
             background: course.price === 0 ? 'linear-gradient(135deg, #10b981, #34d399)' : 'linear-gradient(135deg, #6366f1, #a78bfa)',
           }}
@@ -97,21 +92,18 @@ const CourseCard = ({ course, enrolledMode = false }) => {
 
       {/* Content */}
       <div className="p-6 space-y-4">
-        {/* Title */}
         <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
           {course.title}
         </h3>
 
-        {/* Instructor / Faculty Image */}
+        {/* Instructor */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30">
             <img
               src={course.instructor?.photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
               alt={course.instructor?.name || 'Instructor'}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100';
-              }}
+              onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
             />
           </div>
           <div>
@@ -140,7 +132,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
             />
           ))}
           <span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-            {rating} ({course.students || '1.2k'} students)
+            {rating} ({course.students?.length || '1.2k'} students)
           </span>
         </div>
 
@@ -156,24 +148,11 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </div>
           <div className="flex items-center gap-1.5">
             <Users size={16} />
-            {course.enrolled || '3.4k'} enrolled
+            {course.students?.length || '3.4k'} enrolled
           </div>
         </div>
 
-        {/* Tags */}
-        <div className="flex flex-wrap gap-2">
-          {(course.tags || ['Bestseller', 'New', 'Job Ready']).map((tag, i) => (
-            <span
-              key={i}
-              className="px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-500/30 flex items-center gap-1"
-            >
-              <TagIcon size={12} />
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        {/* Enroll / Continue Button */}
+        {/* Button */}
         <div className="pt-4">
           {enrolledMode ? (
             <Button
@@ -191,13 +170,30 @@ const CourseCard = ({ course, enrolledMode = false }) => {
             <Button
               variant="primary"
               size="lg"
-              className="w-full text-base font-semibold shadow-lg hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+              disabled={isEnrolling}
+              className={`w-full text-base font-semibold shadow-lg transition-all duration-300 ${
+                isEnrolling
+                  ? 'opacity-70 cursor-wait scale-95'
+                  : 'hover:scale-105 hover:shadow-indigo-500/40 active:scale-95'
+              }`}
               onClick={handleEnroll}
             >
-              Enroll Now →
+              {isEnrolling ? 'Enrolling...' : 'Enroll Now →'}
             </Button>
           )}
         </div>
+
+        {/* Error Message */}
+        {enrollStatus === 'error' && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400 text-center">
+            {enrollError || 'Something went wrong'}
+          </p>
+        )}
+        {enrollStatus === 'success' && (
+          <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center">
+            Enrollment successful!
+          </p>
+        )}
       </div>
     </motion.div>
   );
