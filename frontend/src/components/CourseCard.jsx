@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, BookOpen, Users } from 'lucide-react';
-import Button from '../components/common/Button';
+import Button from './common/Button'; // ya jo bhi path hai tumhare Button ka
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -10,7 +10,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   const [hover, setHover] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollStatus, setEnrollStatus] = useState(null); // null | 'success' | 'error'
+  const [enrollStatus, setEnrollStatus] = useState(null);
   const [enrollMessage, setEnrollMessage] = useState('');
   const cardRef = useRef(null);
 
@@ -34,23 +34,20 @@ const CourseCard = ({ course, enrolledMode = false }) => {
     setEnrollStatus(null);
     setEnrollMessage('');
 
-    console.log('Enroll button clicked → course ID:', course._id);
+    console.log('Enroll attempt for course:', course._id);
 
     try {
       const res = await api.post(`/enrollments/${course._id}`);
-      console.log('Enroll API success:', res.data);
+      console.log('Enroll success:', res.data);
       setEnrollStatus('success');
       setEnrollMessage('Successfully enrolled! Redirecting...');
       setTimeout(() => navigate(`/course/${course._id}`), 1500);
     } catch (err) {
-      console.error('Enroll failed:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-      });
+      console.error('Enroll failed:', err.response?.data || err.message);
       const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
       setEnrollStatus('error');
       setEnrollMessage(msg);
+      alert(msg);
     } finally {
       setIsEnrolling(false);
     }
@@ -69,7 +66,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       onMouseMove={handleMouseMove}
       onClick={() => navigate(`/course/${course._id}`)}
     >
-      {/* Spotlight hover */}
+      {/* Spotlight */}
       {hover && (
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
@@ -82,16 +79,12 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       {/* Image */}
       <div className="relative h-56 overflow-hidden">
         <img
-          src={
-            course.image
-              ? `https://images.weserv.nl/?url=${encodeURIComponent(course.image)}&w=800&q=85&fit=cover`
-              : 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'
-          }
+          src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80'}
           alt={course.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800';
+            e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80';
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -200,10 +193,10 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           )}
         </div>
 
-        {/* Feedback Message */}
+        {/* Status */}
         {enrollStatus === 'success' && (
           <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center font-medium">
-            Enrollment successful!
+            {enrollMessage}
           </p>
         )}
         {enrollStatus === 'error' && (
