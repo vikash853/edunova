@@ -11,6 +11,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollStatus, setEnrollStatus] = useState(null); // null | 'success' | 'error'
+  const [enrollMessage, setEnrollMessage] = useState('');
   const cardRef = useRef(null);
 
   const rating = course.rating || 4.8;
@@ -31,17 +32,25 @@ const CourseCard = ({ course, enrolledMode = false }) => {
 
     setIsEnrolling(true);
     setEnrollStatus(null);
+    setEnrollMessage('');
+
+    console.log('Enroll button clicked → course ID:', course._id);
 
     try {
       const res = await api.post(`/enrollments/${course._id}`);
+      console.log('Enroll API success:', res.data);
       setEnrollStatus('success');
-      alert('Successfully enrolled! Redirecting...');
+      setEnrollMessage('Successfully enrolled! Redirecting...');
       setTimeout(() => navigate(`/course/${course._id}`), 1500);
     } catch (err) {
+      console.error('Enroll failed:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
-      console.error('Enroll error:', err.response?.data || err);
       setEnrollStatus('error');
-      alert(msg);
+      setEnrollMessage(msg);
     } finally {
       setIsEnrolling(false);
     }
@@ -60,7 +69,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       onMouseMove={handleMouseMove}
       onClick={() => navigate(`/course/${course._id}`)}
     >
-      {/* Spotlight hover effect */}
+      {/* Spotlight hover */}
       {hover && (
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
@@ -70,16 +79,17 @@ const CourseCard = ({ course, enrolledMode = false }) => {
         />
       )}
 
-      {/* Image Section */}
+      {/* Image */}
       <div className="relative h-56 overflow-hidden">
         <img
           src={
             course.image
-              ? `https://images.weserv.nl/?url=${encodeURIComponent(course.image)}&w=800&q=85`
+              ? `https://images.weserv.nl/?url=${encodeURIComponent(course.image)}&w=800&q=85&fit=cover`
               : 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'
           }
           alt={course.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          loading="lazy"
           onError={(e) => {
             e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800';
           }}
@@ -159,7 +169,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </div>
         </div>
 
-        {/* Enroll / Continue Button */}
+        {/* Button */}
         <div className="pt-4">
           {enrolledMode ? (
             <Button
@@ -190,15 +200,15 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           )}
         </div>
 
-        {/* Status Message */}
+        {/* Feedback Message */}
         {enrollStatus === 'success' && (
-          <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center">
+          <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center font-medium">
             Enrollment successful!
           </p>
         )}
         {enrollStatus === 'error' && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400 text-center">
-            {enrollStatus}
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400 text-center font-medium">
+            {enrollMessage}
           </p>
         )}
       </div>
