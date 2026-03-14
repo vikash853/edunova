@@ -1,202 +1,164 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Star, Clock, BookOpen, Users, Tag as TagIcon } from 'lucide-react';
-import Button from '../components/common/Button';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import CourseCard from '../components/CourseCard';
 import api from '../api';
+import { Search, X } from 'lucide-react';
+import Button from '../components/common/Button';
+import Skeleton from '../components/common/Skeleton';
 
-const CourseCard = ({ course, enrolledMode = false }) => {
-  const navigate = useNavigate();
-  const [hover, setHover] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
-  const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollStatus, setEnrollStatus] = useState(null); // null | 'success' | 'error'
-  const cardRef = useRef(null);
+const Courses = () => {
+  const [courses, setCourses] = useState([]);
+  const [filteredCourses, setFilteredCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
 
-  const rating = course.rating || 4.8;
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
+  const categories = [
+    'All', 'Web Development', 'AI & ML', 'UI/UX Design', 'Python',
+    'Data Science', 'Mobile Dev', 'DevOps & Cloud', 'Cybersecurity',
+    'Blockchain', 'Others'
+  ];
 
-  const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
-  };
+  // Fetch courses
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await api.get('/courses');
+        console.log('✅ Courses fetched from backend:', res.data.length);
+        setCourses(res.data || []);
+        setFilteredCourses(res.data || []);
+      } catch (err) {
+        console.error('❌ Courses fetch failed:', err);
+        setError('Failed to load courses. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
-  const handleEnroll = async (e) => {
-    e.stopPropagation();
-    e.preventDefault();
+  // Filter + Sort
+  useEffect(() => {
+    let result = [...courses];
 
-    setIsEnrolling(true);
-    setEnrollStatus(null);
-
-    try {
-      const res = await api.post(`/enrollments/${course._id}`);
-      setEnrollStatus('success');
-      alert('Successfully enrolled! Redirecting...');
-      setTimeout(() => navigate(`/course/${course._id}`), 1500);
-    } catch (err) {
-      const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
-      console.error('Enroll error:', err.response);
-      setEnrollStatus('error');
-      alert(msg);
-    } finally {
-      setIsEnrolling(false);
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(course =>
+        course.title?.toLowerCase().includes(term) ||
+        course.description?.toLowerCase().includes(term)
+      );
     }
+
+    if (selectedCategory !== 'All') {
+      result = result.filter(course => course.category === selectedCategory);
+    }
+
+    result = [...result].sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      if (sortBy === 'price-low') return (a.price || 0) - (b.price || 0);
+      if (sortBy === 'price-high') return (b.price || 0) - (a.price || 0);
+      if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+      return 0;
+    });
+
+    setFilteredCourses(result);
+  }, [searchTerm, selectedCategory, sortBy, courses]);
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('All');
+    setSortBy('newest');
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-16">
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-[460px] rounded-3xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return <div className="text-red-600 text-center py-20 text-xl">{error}</div>;
+  }
 
   return (
-    <motion.div
-      ref={cardRef}
-      className="group relative bg-white dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-xl transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/20 hover:border-indigo-500/40 cursor-pointer"
-      initial={{ opacity: 0, y: 40, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ scale: 1.03, y: -8 }}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onMouseMove={handleMouseMove}
-      onClick={() => navigate(`/course/${course._id}`)}
-    >
-      {/* Spotlight */}
-      {hover && (
-        <div
-          className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
-          style={{
-            background: `radial-gradient(circle at ${mousePos.x}% ${mousePos.y}%, rgba(99,102,241,0.15) 0%, transparent 60%)`,
-          }}
-        />
-      )}
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-950 dark:to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-4xl md:text-5xl font-bold text-center mb-10 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Discover Your Next Skill
+        </h1>
 
-      {/* Image */}
-      <div className="relative h-56 overflow-hidden">
-        <img
-          src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'}
-          alt={course.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-        {/* Price Badge */}
-        <div className="absolute top-4 right-4 px-4 py-2 rounded-full font-bold text-white shadow-lg transform group-hover:scale-110 transition-transform"
-          style={{
-            background: course.price === 0 ? 'linear-gradient(135deg, #10b981, #34d399)' : 'linear-gradient(135deg, #6366f1, #a78bfa)',
-          }}
-        >
-          {course.price === 0 ? 'Free' : `₹${course.price}`}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-6 space-y-4">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
-          {course.title}
-        </h3>
-
-        {/* Instructor */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30">
-            <img
-              src={course.instructor?.photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
-              alt={course.instructor?.name || 'Instructor'}
-              className="w-full h-full object-cover"
-              onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4 mb-10 items-center justify-between">
+          <div className="relative w-full md:w-96">
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 py-3 rounded-full border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500"
             />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {course.instructor?.name || 'Expert Instructor'}
+
+          <div className="flex gap-3 flex-wrap">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-5 py-2 rounded-full border border-gray-300 dark:border-gray-600"
+          >
+            <option value="newest">Newest First</option>
+            <option value="price-low">Price Low to High</option>
+            <option value="price-high">Price High to Low</option>
+            <option value="rating">Highest Rated</option>
+          </select>
+
+          <Button variant="outline" onClick={clearFilters} className="text-sm">
+            Clear Filters
+          </Button>
+        </div>
+
+        {/* Course Grid */}
+        {filteredCourses.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
+              No courses found
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {course.level || 'Intermediate'}
-            </p>
-          </div>
-        </div>
-
-        {/* Rating */}
-        <div className="flex items-center gap-1">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              size={18}
-              className={`${
-                i < fullStars
-                  ? 'text-yellow-400 fill-current'
-                  : i === fullStars && hasHalfStar
-                  ? 'text-yellow-400 fill-current opacity-50'
-                  : 'text-gray-300 dark:text-gray-600'
-              }`}
-            />
-          ))}
-          <span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-            {rating} ({course.students?.length || '1.2k'} students)
-          </span>
-        </div>
-
-        {/* Meta */}
-        <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-          <div className="flex items-center gap-1.5">
-            <Clock size={16} />
-            {course.duration || '12h 30m'}
-          </div>
-          <div className="flex items-center gap-1.5">
-            <BookOpen size={16} />
-            {course.lessons || '45'} lessons
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Users size={16} />
-            {course.students?.length || '3.4k'} enrolled
-          </div>
-        </div>
-
-        {/* Button */}
-        <div className="pt-4">
-          {enrolledMode ? (
-            <Button
-              variant="primary"
-              size="lg"
-              className="w-full text-base font-semibold shadow-lg hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/course/${course._id}`);
-              }}
-            >
-              Continue Learning →
+            <Button variant="primary" onClick={clearFilters}>
+              Clear Filters
             </Button>
-          ) : (
-            <Button
-              variant="primary"
-              size="lg"
-              disabled={isEnrolling}
-              className={`w-full text-base font-semibold shadow-lg transition-all duration-300 ${
-                isEnrolling
-                  ? 'opacity-70 cursor-wait scale-95'
-                  : 'hover:scale-105 hover:shadow-indigo-500/40 active:scale-95'
-              }`}
-              onClick={handleEnroll}
-            >
-              {isEnrolling ? 'Enrolling...' : 'Enroll Now →'}
-            </Button>
-          )}
-        </div>
-
-        {/* Error Message */}
-        {enrollStatus === 'error' && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400 text-center">
-            {enrollError || 'Something went wrong'}
-          </p>
-        )}
-        {enrollStatus === 'success' && (
-          <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center">
-            Enrollment successful!
-          </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+            {filteredCourses.map((course) => (
+              <CourseCard key={course._id} course={course} />
+            ))}
+          </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
-export default CourseCard;
+export default Courses;
