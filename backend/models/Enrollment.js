@@ -13,25 +13,31 @@ const enrollmentSchema = new mongoose.Schema({
   },
   points: {
     type: Number,
-    default: 0,
+    default: 10,
   },
   badge: {
     type: String,
     default: '',
   },
-  progress: {   // ← Yeh field add kar diya (sabse zaroori!)
+  progress: {
     type: Number,
     default: 0,
     min: 0,
     max: 100,
   },
-  lastLectureId: {  // optional, agar use kar rahe ho
+  enrolledAt: {
+    type: Date,
+    default: Date.now,
+  },
+  lastLectureId: {
     type: String,
     default: null,
   },
-}, { timestamps: true });
+}, { 
+  timestamps: true 
+});
 
-// Auto-update updatedAt on save (good practice)
+// Optional: pre-save hook for extra safety
 enrollmentSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
