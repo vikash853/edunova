@@ -8,60 +8,68 @@ const protect = require("../middleware/authMiddleware");
 // Enroll in a course (student only)
 router.post("/:courseId", protect, async (req, res) => {
   try {
+    // Debug log - ye Render logs mein dikhega
     console.log("[ENROLL] Request started", {
-      userId: req.user?.id,
+      userIdRaw: req.user?.id,
+      userIdType: typeof req.user?.id,
       role: req.user?.role,
-      courseId: req.params.courseId,
+      courseIdRaw: req.params.courseId,
+      courseIdType: typeof req.params.courseId,
       timestamp: new Date().toISOString(),
     });
 
     if (!req.user) {
-      console.log("[ENROLL] No user object found in request");
+      console.log("[ENROLL] No user in request");
       return res.status(401).json({ message: "Unauthorized - please login again" });
     }
 
     if (req.user.role !== "student") {
-      console.log("[ENROLL] Unauthorized role:", req.user.role);
+      console.log("[ENROLL] Wrong role:", req.user.role);
       return res.status(403).json({ message: "Only students can enroll" });
     }
 
-    const courseIdStr = req.params.courseId;
-    let courseId;
+    // Convert string IDs to ObjectId safely
+    let studentId, courseId;
     try {
-      courseId = new mongoose.Types.ObjectId(courseIdStr);
+      studentId = new mongoose.Types.ObjectId(req.user.id);
+      courseId = new mongoose.Types.ObjectId(req.params.courseId);
     } catch (err) {
-      console.log("[ENROLL] Invalid courseId format:", courseIdStr);
-      return res.status(400).json({ message: "Invalid course ID" });
+      console.log("[ENROLL] ID conversion failed", err.message);
+      return res.status(400).json({ message: "Invalid ID format" });
     }
 
+    // Check if course exists
     const course = await Course.findById(courseId);
     if (!course) {
       console.log("[ENROLL] Course not found:", courseId);
       return res.status(404).json({ message: "Course not found" });
     }
 
+    // Check already enrolled
     const existing = await Enrollment.findOne({
-      student: req.user.id,
+      student: studentId,
       course: courseId,
     });
 
     if (existing) {
-      console.log("[ENROLL] Already enrolled in course:", courseId);
+      console.log("[ENROLL] Already enrolled");
       return res.status(400).json({ message: "Already enrolled in this course" });
     }
 
-    console.log("[ENROLL] Creating new enrollment...");
+    // Create enrollment
+    console.log("[ENROLL] Creating enrollment...");
     const enrollment = await Enrollment.create({
-      student: req.user.id,
+      student: studentId,
       course: courseId,
       points: 10,
       progress: 0,
       enrolledAt: new Date(),
     });
 
-    console.log("[ENROLL] Updating course students array...");
+    // Update course students array
+    console.log("[ENROLL] Updating course students...");
     await Course.findByIdAndUpdate(courseId, {
-      $addToSet: { students: req.user.id },
+      $addToSet: { students: studentId },
     });
 
     console.log("[ENROLL] Success - Enrollment ID:", enrollment._id);
@@ -73,7 +81,7 @@ router.post("/:courseId", protect, async (req, res) => {
     console.error("[ENROLL] CRASH:", {
       message: error.message,
       name: error.name,
-      stack: error.stack?.slice(0, 500), // limited for logs
+      stack: error.stack?.slice(0, 500),
     });
     res.status(500).json({
       message: "Enrollment failed",
@@ -82,7 +90,7 @@ router.post("/:courseId", protect, async (req, res) => {
   }
 });
 
-// Update progress
+// Update progress (unchanged)
 router.put("/:courseId/progress", protect, async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -109,7 +117,7 @@ router.put("/:courseId/progress", protect, async (req, res) => {
   }
 });
 
-// Get MY enrolled courses
+// Get MY enrolled courses (unchanged)
 router.get("/my", protect, async (req, res) => {
   try {
     const enrollments = await Enrollment.find({ student: req.user.id })
