@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, BookOpen, Users } from 'lucide-react';
-import Button from './common/Button'; // Adjust path if your Button is in a different folder
+import Button from './common/Button';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -10,7 +10,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   const [hover, setHover] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollStatus, setEnrollStatus] = useState(null); // null | 'success' | 'error'
+  const [enrollStatus, setEnrollStatus] = useState(null);
   const [enrollMessage, setEnrollMessage] = useState('');
   const cardRef = useRef(null);
 
@@ -34,20 +34,16 @@ const CourseCard = ({ course, enrolledMode = false }) => {
     setEnrollStatus(null);
     setEnrollMessage('');
 
-    console.log('Enroll attempt → Course:', course._id, 'User token exists:', !!localStorage.getItem('token'));
+    console.log('Enroll attempt for course:', course._id);
 
     try {
       const res = await api.post(`/enrollments/${course._id}`);
-      console.log('Enroll API success:', res.data);
+      console.log('Enroll success:', res.data);
       setEnrollStatus('success');
       setEnrollMessage('Successfully enrolled! Redirecting...');
       setTimeout(() => navigate(`/course/${course._id}`), 1500);
     } catch (err) {
-      console.error('Enroll failed:', {
-        status: err.response?.status,
-        data: err.response?.data,
-        message: err.message,
-      });
+      console.error('Enroll failed:', err.response?.data || err.message);
       const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
       setEnrollStatus('error');
       setEnrollMessage(msg);
@@ -70,7 +66,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       onMouseMove={handleMouseMove}
       onClick={() => navigate(`/course/${course._id}`)}
     >
-      {/* Spotlight hover effect */}
+      {/* Spotlight */}
       {hover && (
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
@@ -80,16 +76,14 @@ const CourseCard = ({ course, enrolledMode = false }) => {
         />
       )}
 
-      {/* Image Section */}
+      {/* Image */}
       <div className="relative h-56 overflow-hidden">
         <img
           src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80'}
           alt={course.title}
           loading="lazy"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          onError={(e) => {
-            e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80';
-          }}
+          onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80'}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
@@ -106,13 +100,13 @@ const CourseCard = ({ course, enrolledMode = false }) => {
 
       {/* Content */}
       <div className="p-6 space-y-4">
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
+        <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
           {course.title}
         </h3>
 
         {/* Instructor */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30">
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30 flex-shrink-0">
             <img
               src={course.instructor?.photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
               alt={course.instructor?.name || 'Instructor'}
@@ -120,8 +114,8 @@ const CourseCard = ({ course, enrolledMode = false }) => {
               onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
             />
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
               {course.instructor?.name || 'Expert Instructor'}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -150,7 +144,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </span>
         </div>
 
-        {/* Meta Info */}
+        {/* Meta */}
         <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex items-center gap-1.5">
             <Clock size={16} />
@@ -166,7 +160,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </div>
         </div>
 
-        {/* Action Button */}
+        {/* Button */}
         <div className="pt-4">
           {enrolledMode ? (
             <Button
@@ -197,7 +191,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           )}
         </div>
 
-        {/* Feedback */}
+        {/* Status Message */}
         {enrollStatus === 'success' && (
           <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center font-medium">
             {enrollMessage}
