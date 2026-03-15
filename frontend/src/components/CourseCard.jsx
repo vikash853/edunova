@@ -2,10 +2,15 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, BookOpen, Users, Tag as TagIcon } from 'lucide-react';
 import Button from '../components/common/Button';
+import { useNavigate } from 'react-router-dom';
+import api from '../api';
 
-const CourseCard = ({ course }) => {
+const CourseCard = ({ course, enrolledMode = false }) => {
+  const navigate = useNavigate();
   const [hover, setHover] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [isGeneratingTest, setIsGeneratingTest] = useState(false);
   const cardRef = useRef(null);
 
   const rating = course.rating || 4.8;
@@ -20,10 +25,45 @@ const CourseCard = ({ course }) => {
     setMousePos({ x, y });
   };
 
+  const handleEnroll = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    setIsEnrolling(true);
+    try {
+      await api.post(`/enrollments/${course._id}`);
+      alert('Successfully enrolled!');
+      navigate(`/course/${course._id}`);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Enrollment failed';
+      alert(msg);
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
+
+  const handleGenerateTest = async (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    setIsGeneratingTest(true);
+    try {
+      const res = await api.post(`/tests/generate/${course._id}`);
+      alert('AI Test Generated! Check console for questions.');
+      console.log('Generated AI Test:', res.data.test);
+      // Future: navigate to /test/${course._id} or show modal
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to generate AI test';
+      alert(msg);
+    } finally {
+      setIsGeneratingTest(false);
+    }
+  };
+
   return (
     <motion.div
       ref={cardRef}
-      className="group relative bg-white dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-xl transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/20 hover:border-indigo-500/40"
+      className="group relative bg-white dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-xl transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/20 hover:border-indigo-500/40 cursor-pointer"
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -31,6 +71,7 @@ const CourseCard = ({ course }) => {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onMouseMove={handleMouseMove}
+      onClick={() => navigate(`/course/${course._id}`)}
     >
       {/* Spotlight hover effect */}
       {hover && (
@@ -42,7 +83,7 @@ const CourseCard = ({ course }) => {
         />
       )}
 
-      {/* Gradient border glow on hover */}
+      {/* Gradient border glow */}
       <div
         className={`absolute inset-0 rounded-3xl pointer-events-none transition-all duration-500 ${
           hover ? 'opacity-100 scale-105' : 'opacity-0 scale-100'
@@ -60,11 +101,13 @@ const CourseCard = ({ course }) => {
           src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'}
           alt={course.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800'}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
         {/* Price Badge */}
-        <div className="absolute top-4 right-4 px-4 py-2 rounded-full font-bold text-white shadow-lg transform group-hover:scale-110 transition-transform"
+        <div
+          className="absolute top-4 right-4 px-4 py-2 rounded-full font-bold text-white shadow-lg transform group-hover:scale-110 transition-transform"
           style={{
             background: course.price === 0 ? 'linear-gradient(135deg, #10b981, #34d399)' : 'linear-gradient(135deg, #6366f1, #a78bfa)',
           }}
@@ -75,7 +118,6 @@ const CourseCard = ({ course }) => {
 
       {/* Content */}
       <div className="p-6 space-y-4">
-        {/* Title */}
         <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
           {course.title}
         </h3>
@@ -85,8 +127,9 @@ const CourseCard = ({ course }) => {
           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30">
             <img
               src={course.instructor?.photo || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
-              alt={course.instructor?.name}
+              alt={course.instructor?.name || 'Instructor'}
               className="w-full h-full object-cover"
+              onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100'}
             />
           </div>
           <div>
@@ -148,15 +191,45 @@ const CourseCard = ({ course }) => {
           ))}
         </div>
 
-        {/* Enroll Button */}
-        <div className="pt-4">
+        {/* Buttons */}
+        <div className="pt-4 space-y-3">
+          {enrolledMode ? (
+            <Button
+              variant="primary"
+              size="lg"
+              className="w-full text-base font-semibold shadow-lg hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/course/${course._id}`);
+              }}
+            >
+              Continue Learning →
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="lg"
+              disabled={isEnrolling}
+              className={`w-full text-base font-semibold shadow-lg transition-all duration-300 ${
+                isEnrolling ? 'opacity-70 cursor-wait scale-95' : 'hover:scale-105 hover:shadow-indigo-500/40 active:scale-95'
+              }`}
+              onClick={handleEnroll}
+            >
+              {isEnrolling ? 'Enrolling...' : 'Enroll Now →'}
+            </Button>
+          )}
+
+          {/* AI Test Series Button – only for enrolled or free courses */}
           <Button
-            variant="primary"
+            variant="outline"
             size="lg"
-            className="w-full text-base font-semibold shadow-lg hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-            onClick={() => {/* handle enroll */}}
+            disabled={isGeneratingTest || (!enrolledMode && course.price !== 0)}
+            className={`w-full text-sm transition-all duration-300 ${
+              isGeneratingTest ? 'opacity-70 cursor-wait' : 'hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+            }`}
+            onClick={handleGenerateTest}
           >
-            Enroll Now →
+            {isGeneratingTest ? 'Generating AI Test...' : 'Take AI Test Series →'}
           </Button>
         </div>
       </div>
