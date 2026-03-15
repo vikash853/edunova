@@ -108,7 +108,7 @@ const About = () => {
             >
               <div className="relative rounded-3xl overflow-hidden border-4 border-white/20 dark:border-gray-800/50 shadow-2xl">
                 <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800" // ← Yahan tumhari real photo daal dena
+                  src="images/vikash.jpeg"
                   alt="Vikash Shukla - Founder EduNova"
                   className="w-full h-auto object-cover transition-transform duration-700 hover:scale-105"
                 />

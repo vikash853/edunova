@@ -1129,7 +1129,6 @@ function Pricing() {
                 onMouseLeave={() => setHov(false)}
                 style={{
                   opacity: piv ? 1 : 0,
-                  transform: piv ? "translateY(0) scale(1)" : "translateY(50px) scale(.97)",
                   transition: `opacity .7s ease ${i * 0.12}s,transform .7s cubic-bezier(.22,1,.36,1) ${i * 0.12}s`,
                   borderRadius: 22,
                   background: p.hot ? "linear-gradient(160deg,rgba(99,102,241,0.18),rgba(139,92,246,0.12))" : "rgba(255,255,255,0.03)",
