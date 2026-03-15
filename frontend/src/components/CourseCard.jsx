@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, BookOpen, Users } from 'lucide-react';
-import Button from './common/Button'; // ya jo bhi path hai tumhare Button ka
+import Button from './common/Button'; // Adjust path if your Button is in a different folder
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -10,7 +10,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   const [hover, setHover] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [enrollStatus, setEnrollStatus] = useState(null);
+  const [enrollStatus, setEnrollStatus] = useState(null); // null | 'success' | 'error'
   const [enrollMessage, setEnrollMessage] = useState('');
   const cardRef = useRef(null);
 
@@ -34,16 +34,20 @@ const CourseCard = ({ course, enrolledMode = false }) => {
     setEnrollStatus(null);
     setEnrollMessage('');
 
-    console.log('Enroll attempt for course:', course._id);
+    console.log('Enroll attempt → Course:', course._id, 'User token exists:', !!localStorage.getItem('token'));
 
     try {
       const res = await api.post(`/enrollments/${course._id}`);
-      console.log('Enroll success:', res.data);
+      console.log('Enroll API success:', res.data);
       setEnrollStatus('success');
       setEnrollMessage('Successfully enrolled! Redirecting...');
       setTimeout(() => navigate(`/course/${course._id}`), 1500);
     } catch (err) {
-      console.error('Enroll failed:', err.response?.data || err.message);
+      console.error('Enroll failed:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+      });
       const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
       setEnrollStatus('error');
       setEnrollMessage(msg);
@@ -56,7 +60,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   return (
     <motion.div
       ref={cardRef}
-      className="group relative bg-white dark:bg-gray-900/70 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-xl transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/20 hover:border-indigo-500/40 cursor-pointer"
+      className="group relative bg-white dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50 shadow-xl transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/20 hover:border-indigo-500/40 cursor-pointer"
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -66,7 +70,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       onMouseMove={handleMouseMove}
       onClick={() => navigate(`/course/${course._id}`)}
     >
-      {/* Spotlight */}
+      {/* Spotlight hover effect */}
       {hover && (
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
@@ -76,7 +80,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
         />
       )}
 
-      {/* Image */}
+      {/* Image Section */}
       <div className="relative h-56 overflow-hidden">
         <img
           src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80'}
@@ -146,7 +150,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </span>
         </div>
 
-        {/* Meta */}
+        {/* Meta Info */}
         <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex items-center gap-1.5">
             <Clock size={16} />
@@ -162,7 +166,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </div>
         </div>
 
-        {/* Button */}
+        {/* Action Button */}
         <div className="pt-4">
           {enrolledMode ? (
             <Button
@@ -193,7 +197,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           )}
         </div>
 
-        {/* Status */}
+        {/* Feedback */}
         {enrollStatus === 'success' && (
           <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center font-medium">
             {enrollMessage}
