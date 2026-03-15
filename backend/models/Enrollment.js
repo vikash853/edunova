@@ -37,10 +37,4 @@ const enrollmentSchema = new mongoose.Schema({
   timestamps: true 
 });
 
-// Optional: pre-save hook for extra safety
-enrollmentSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
 module.exports = mongoose.model("Enrollment", enrollmentSchema);
