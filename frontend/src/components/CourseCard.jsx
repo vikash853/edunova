@@ -21,37 +21,36 @@ const CourseCard = ({ course, enrolledMode = false }) => {
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
+    setMousePos({
+      x: ((e.clientX - rect.left) / rect.width) * 100,
+      y: ((e.clientY - rect.top) / rect.height) * 100,
+    });
   };
 
   const handleEnroll = async (e) => {
     e.stopPropagation();
     e.preventDefault();
-
     setIsEnrolling(true);
     setEnrollStatus(null);
     setEnrollMessage('');
 
-    console.log('Enroll attempt for course:', course._id);
-
     try {
       const res = await api.post(`/enrollments/${course._id}`);
-      console.log('Enroll success:', res.data);
       setEnrollStatus('success');
       setEnrollMessage('Successfully enrolled! Redirecting...');
       setTimeout(() => navigate(`/course/${course._id}`), 1500);
     } catch (err) {
-      console.error('Enroll failed:', err.response?.data || err.message);
       const msg = err.response?.data?.message || 'Enrollment failed. Please try again.';
       setEnrollStatus('error');
       setEnrollMessage(msg);
-      alert(msg);
+      // FIX: removed alert(msg) — the inline error message below is sufficient
     } finally {
       setIsEnrolling(false);
     }
   };
+
+  // FIX: use ?? 0 instead of || 'fake number' — show real zero, not fake social proof
+  const studentCount = course.students?.length ?? 0;
 
   return (
     <motion.div
@@ -66,7 +65,6 @@ const CourseCard = ({ course, enrolledMode = false }) => {
       onMouseMove={handleMouseMove}
       onClick={() => navigate(`/course/${course._id}`)}
     >
-      {/* Spotlight */}
       {hover && (
         <div
           className="absolute inset-0 pointer-events-none z-10 opacity-60 transition-opacity"
@@ -76,7 +74,6 @@ const CourseCard = ({ course, enrolledMode = false }) => {
         />
       )}
 
-      {/* Image */}
       <div className="relative h-56 overflow-hidden">
         <img
           src={course.image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80'}
@@ -86,25 +83,23 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           onError={(e) => e.target.src = 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&auto=format&fit=crop&q=80'}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-        {/* Price Badge */}
         <div
           className="absolute top-4 right-4 px-4 py-2 rounded-full font-bold text-white shadow-lg transform group-hover:scale-110 transition-transform"
           style={{
-            background: course.price === 0 ? 'linear-gradient(135deg, #10b981, #34d399)' : 'linear-gradient(135deg, #6366f1, #a78bfa)',
+            background: course.price === 0
+              ? 'linear-gradient(135deg, #10b981, #34d399)'
+              : 'linear-gradient(135deg, #6366f1, #a78bfa)',
           }}
         >
           {course.price === 0 ? 'Free' : `₹${course.price}`}
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6 space-y-4">
         <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-2">
           {course.title}
         </h3>
 
-        {/* Instructor */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-indigo-500/30 flex-shrink-0">
             <img
@@ -118,13 +113,10 @@ const CourseCard = ({ course, enrolledMode = false }) => {
             <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
               {course.instructor?.name || 'Expert Instructor'}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {course.level || 'Intermediate'}
-            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{course.level || 'Intermediate'}</p>
           </div>
         </div>
 
-        {/* Rating */}
         <div className="flex items-center gap-1">
           {[...Array(5)].map((_, i) => (
             <Star
@@ -140,11 +132,10 @@ const CourseCard = ({ course, enrolledMode = false }) => {
             />
           ))}
           <span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-            {rating} ({course.students?.length || '1.2k'} students)
+            {rating} ({studentCount} students)
           </span>
         </div>
 
-        {/* Meta */}
         <div className="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex items-center gap-1.5">
             <Clock size={16} />
@@ -156,21 +147,17 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           </div>
           <div className="flex items-center gap-1.5">
             <Users size={16} />
-            {course.students?.length || '3.4k'} enrolled
+            {studentCount} enrolled
           </div>
         </div>
 
-        {/* Button */}
         <div className="pt-4">
           {enrolledMode ? (
             <Button
               variant="primary"
               size="lg"
               className="w-full text-base font-semibold shadow-lg hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/course/${course._id}`);
-              }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/course/${course._id}`); }}
             >
               Continue Learning →
             </Button>
@@ -180,9 +167,7 @@ const CourseCard = ({ course, enrolledMode = false }) => {
               size="lg"
               disabled={isEnrolling}
               className={`w-full text-base font-semibold shadow-lg transition-all duration-300 ${
-                isEnrolling
-                  ? 'opacity-70 cursor-wait scale-95'
-                  : 'hover:scale-105 hover:shadow-indigo-500/40 active:scale-95'
+                isEnrolling ? 'opacity-70 cursor-wait scale-95' : 'hover:scale-105 hover:shadow-indigo-500/40 active:scale-95'
               }`}
               onClick={handleEnroll}
             >
@@ -191,7 +176,6 @@ const CourseCard = ({ course, enrolledMode = false }) => {
           )}
         </div>
 
-        {/* Status Message */}
         {enrollStatus === 'success' && (
           <p className="mt-3 text-sm text-green-600 dark:text-green-400 text-center font-medium">
             {enrollMessage}

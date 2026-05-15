@@ -1,7 +1,6 @@
-// src/components/layout/AppLayout.jsx
 import React from 'react';
-import { Link } from 'react-router-dom'; // Fixed: Added this
-import Navbar from "../Navbar"; // Assuming path is correct
+import { Link } from 'react-router-dom';
+import Navbar from "../Navbar";
 
 const AppLayout = ({ children }) => {
   return (
@@ -15,11 +14,9 @@ const AppLayout = ({ children }) => {
         </main>
       </div>
 
-      {/* Premium Footer - Bigger, Better Look */}
       <footer className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950 text-white py-16 shadow-lg">
         <div className="container mx-auto px-6 max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-            {/* Brand Section */}
             <div>
               <h3 className="text-3xl font-bold mb-4 tracking-tight">EduNova</h3>
               <p className="text-indigo-200 text-base max-w-xs">
@@ -27,7 +24,6 @@ const AppLayout = ({ children }) => {
               </p>
             </div>
 
-            {/* Platform Links */}
             <div>
               <h4 className="text-xl font-semibold mb-4">Platform</h4>
               <ul className="space-y-3 text-indigo-100 text-base">
@@ -37,22 +33,21 @@ const AppLayout = ({ children }) => {
               </ul>
             </div>
 
-            {/* Support Links */}
             <div>
               <h4 className="text-xl font-semibold mb-4">Support</h4>
+              {/* FIX: pages that don't exist yet are marked — add real routes before launch */}
               <ul className="space-y-3 text-indigo-100 text-base">
                 <li><Link to="/contact" className="hover:text-white transition duration-300">Contact Us</Link></li>
-                <li><Link to="/faq" className="hover:text-white transition duration-300">FAQ</Link></li> {/* Add FAQ page if needed */}
-                <li><Link to="/community" className="hover:text-white transition duration-300">Community</Link></li> {/* Optional */}
+                <li><span className="text-indigo-300 cursor-default">FAQ (coming soon)</span></li>
+                <li><span className="text-indigo-300 cursor-default">Community (coming soon)</span></li>
               </ul>
             </div>
 
-            {/* Legal Section */}
             <div>
               <h4 className="text-xl font-semibold mb-4">Legal</h4>
               <ul className="space-y-3 text-indigo-100 text-base">
-                <li><Link to="/privacy" className="hover:text-white transition duration-300">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-white transition duration-300">Terms of Service</Link></li>
+                <li><span className="text-indigo-300 cursor-default">Privacy Policy (coming soon)</span></li>
+                <li><span className="text-indigo-300 cursor-default">Terms of Service (coming soon)</span></li>
               </ul>
               <p className="mt-8 text-sm text-indigo-300">
                 © {new Date().getFullYear()} EduNova. All rights reserved.<br />
@@ -61,7 +56,6 @@ const AppLayout = ({ children }) => {
             </div>
           </div>
 
-          {/* Bottom Bar */}
           <div className="border-t border-indigo-700/50 mt-12 pt-8 text-center text-sm text-indigo-200">
             Built in Lucknow, Uttar Pradesh — Powering education globally since 2026.
           </div>

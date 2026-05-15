@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Course = require('../models/Course');
 const protect = require('../middleware/authMiddleware');
-const admin = require('../middleware/admin');
+const roleCheck = require('../middleware/roleMiddleware');
 
 // GET /api/courses - Public - Get all courses
 router.get('/', async (req, res) => {
@@ -14,8 +14,20 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/courses/my - Instructor's own courses
+// FIX: must be BEFORE /:id so Express doesn't treat "my" as an ObjectId
+router.get('/my', protect, roleCheck('instructor'), async (req, res) => {
+  try {
+    // FIX: use req.user.id (JWT payload key), not req.user._id
+    const courses = await Course.find({ instructor: req.user.id }).populate('instructor', 'name email');
+    res.json(courses);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST /api/courses - Create new course (admin only)
-router.post('/', protect, admin, async (req, res) => {
+router.post('/', protect, roleCheck('admin'), async (req, res) => {
   try {
     const {
       title,
@@ -26,7 +38,6 @@ router.post('/', protect, admin, async (req, res) => {
       level = 'Beginner',
       duration,
       lessons = 0,
-      rating = 4.8,
       featured = false,
     } = req.body;
 
@@ -39,12 +50,14 @@ router.post('/', protect, admin, async (req, res) => {
       description,
       price,
       image: image || 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800',
-      instructor: req.user._id, // auto-set to logged-in admin
+      // FIX: use req.user.id (string from JWT), Mongoose will cast to ObjectId
+      instructor: req.user.id,
       category,
       level,
       duration,
       lessons,
-      rating,
+      // FIX: rating is NOT accepted from client — it starts at default and should
+      // be computed from real reviews later
       featured,
     });
 
@@ -53,19 +66,6 @@ router.post('/', protect, admin, async (req, res) => {
   } catch (err) {
     console.error('Course creation error:', err);
     res.status(400).json({ message: err.message || 'Failed to create course' });
-  }
-});
-
-// GET /api/courses/my - Instructor's own courses
-router.get('/my', protect, async (req, res) => {
-  try {
-    if (req.user.role !== 'instructor') {
-      return res.status(403).json({ message: 'Only instructors can access their courses' });
-    }
-    const courses = await Course.find({ instructor: req.user._id }).populate('instructor', 'name email');
-    res.json(courses);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
 });
 

@@ -4,23 +4,33 @@ const protect = require("../middleware/authMiddleware");
 const Course = require("../models/Course");
 const Groq = require("groq-sdk");
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// NOTE: Groq client is intentionally NOT initialized at the top level.
+// Instantiating it at module load time throws if GROQ_API_KEY is missing,
+// which crashes the entire server on startup. Instead we create it lazily
+// inside the route handler so the rest of the app stays up.
 
-// Generate AI Test Series for a course
+// POST /api/tests/generate/:courseId — AI test generation (students only)
 router.post("/generate/:courseId", protect, async (req, res) => {
   try {
     if (req.user.role !== "student") {
       return res.status(403).json({ message: "Only students can take tests" });
     }
 
+    // Guard: return a clean error instead of crashing if key is not set
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(503).json({
+        message: "AI test feature is not configured. Add GROQ_API_KEY to your .env file.",
+      });
+    }
+
+    // Lazy init — safe because we checked the key above
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
     const course = await Course.findById(req.params.courseId);
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    // AI Prompt (real company style questions)
     const prompt = `You are an expert interviewer from companies like Google, Amazon, Microsoft.
 Generate a 10-question test for "${course.title}" course.
 
@@ -31,7 +41,7 @@ Rules:
 - For coding questions give input/output examples
 - Make it unique every time
 
-Return only JSON in this exact format:
+Return ONLY valid JSON with no markdown, no backticks, no explanation — just the raw JSON object:
 {
   "title": "AI Generated Test - ${course.title}",
   "questions": [
@@ -59,13 +69,29 @@ Return only JSON in this exact format:
       max_tokens: 2048,
     });
 
-    const testData = JSON.parse(completion.choices[0].message.content);
+    const rawContent = completion.choices[0]?.message?.content;
+    if (!rawContent) {
+      return res.status(502).json({ message: "No response from AI model" });
+    }
 
-    res.json({
-      success: true,
-      test: testData,
-      courseTitle: course.title
-    });
+    // Safely parse — strip markdown fences the model sometimes adds
+    let testData;
+    try {
+      const cleaned = rawContent
+        .replace(/^```json\s*/i, "")
+        .replace(/^```\s*/i, "")
+        .replace(/```\s*$/i, "")
+        .trim();
+      testData = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.error("AI response JSON parse failed:", parseErr.message);
+      console.error("Raw AI response:", rawContent.slice(0, 500));
+      return res.status(502).json({
+        message: "AI returned malformed data. Please try again.",
+      });
+    }
+
+    res.json({ success: true, test: testData, courseTitle: course.title });
   } catch (error) {
     console.error("AI Test Generation Error:", error);
     res.status(500).json({ message: "Failed to generate test", error: error.message });

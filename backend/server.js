@@ -1,9 +1,14 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 const connectDB = require("./config/db");
 
 const app = express();
+
+// ── Security headers (helmet must be first)
+app.use(helmet());
 
 // ── CORS
 app.use(cors({
@@ -14,39 +19,44 @@ app.use(cors({
     "https://edunova-opal.vercel.app"
   ],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
 
-// Database connect
+// ── Rate limiting on auth routes (brute-force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests from this IP, please try again after 15 minutes" },
+});
+
+// ── Database
 connectDB();
 
-// Routes
-app.use("/api/auth",        require("./routes/authRoutes"));
+// ── Routes
+app.use("/api/auth",        authLimiter, require("./routes/authRoutes"));
 app.use("/api/courses",     require("./routes/courseRoutes"));
 app.use("/api/enrollments", require("./routes/enrollmentRoutes"));
 app.use("/api/dashboard",   require("./routes/dashboardRoutes"));
 app.use("/api/comments",    require("./routes/commentRoutes"));
+// FIX: testRoutes was defined but never mounted — now it is
+app.use("/api/tests",       require("./routes/testRoutes"));
 
-// Test route
+// Health check
 app.get("/", (req, res) => {
-  res.send("EduNova LMS API Running");
+  res.json({ status: "ok", message: "EduNova LMS API Running" });
 });
 
-// Protected test route
-const protect = require("./middleware/authMiddleware");
-app.get("/api/protected", protect, (req, res) => {
-  res.json({ message: "Protected route accessed", user: req.user });
-});
-
-// Global error handler
+// ── Global error handler
 app.use((err, req, res, next) => {
   console.error("Server Error:", err.stack);
-  res.status(500).json({
-    message: "Something went wrong on the server!",
-    error: process.env.NODE_ENV === "production" ? undefined : err.message
+  res.status(err.status || 500).json({
+    message: err.message || "Something went wrong on the server!",
+    error: process.env.NODE_ENV === "production" ? undefined : err.message,
   });
 });
 

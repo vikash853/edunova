@@ -7,13 +7,19 @@ import LoadingSpinner from '../components/LoadingSpinner';
 const AdminUsers = () => {
   const { user, loading: authLoading } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // FIX: initialize loading to false — only flip true during the actual fetch.
+  // The old code returned early from useEffect without calling setLoading(false),
+  // causing an infinite spinner for non-admin users.
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Wait for auth to resolve before deciding whether to fetch
+    if (authLoading) return;
     if (!user || user.role !== 'admin') return;
 
     const fetchUsers = async () => {
+      setLoading(true);
       try {
         const res = await api.get('/auth/users');
         setUsers(res.data);
@@ -24,9 +30,11 @@ const AdminUsers = () => {
         setLoading(false);
       }
     };
-    fetchUsers();
-  }, [user]);
 
+    fetchUsers();
+  }, [user, authLoading]);
+
+  // Show spinner while auth is resolving OR while fetching users
   if (authLoading || loading) return <LoadingSpinner />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== 'admin') return <Navigate to="/dashboard" replace />;
@@ -41,9 +49,7 @@ const AdminUsers = () => {
 
         {users.length === 0 ? (
           <div className="text-center py-20 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-3xl border border-gray-200 dark:border-gray-700 shadow-xl">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-              No users found
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">No users found</h2>
             <p className="text-gray-600 dark:text-gray-400">
               The system is empty or there was an issue loading users.
             </p>
@@ -70,7 +76,11 @@ const AdminUsers = () => {
                 <div className="space-y-2 text-sm">
                   <p>
                     <span className="font-medium">Role:</span>{' '}
-                    <span className={`capitalize font-semibold ${u.role === 'admin' ? 'text-purple-600' : u.role === 'instructor' ? 'text-blue-600' : 'text-green-600'}`}>
+                    <span className={`capitalize font-semibold ${
+                      u.role === 'admin' ? 'text-purple-600'
+                      : u.role === 'instructor' ? 'text-blue-600'
+                      : 'text-green-600'
+                    }`}>
                       {u.role}
                     </span>
                   </p>
@@ -82,11 +92,6 @@ const AdminUsers = () => {
                       year: 'numeric',
                     })}
                   </p>
-                  {u.role === 'student' && (
-                    <p>
-                      <span className="font-medium">Enrolled Courses:</span> Coming soon...
-                    </p>
-                  )}
                 </div>
               </div>
             ))}
