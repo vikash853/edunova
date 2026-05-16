@@ -1,447 +1,174 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import api from '../../api';
-import Button from '../../components/common/Button'; // adjust path if needed
+import { ArrowLeft, Upload, BookOpen, Tag, DollarSign, Clock, BarChart2, Star, Image, AlignLeft, CheckCircle } from 'lucide-react';
 
-const AddCourse = () => {
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    price: 0,
-    image: '',
-    category: 'Web Development',
-    level: 'Beginner',
-    duration: '',
-    lessons: 0,
-    rating: 4.8,
-    featured: false,
-  });
+const CATEGORIES = ["Web Development","AI & Machine Learning","UI/UX Design","Python","Data Science","Mobile Development","DevOps & Cloud","Cybersecurity","Blockchain","Others"];
+const LEVELS = ["Beginner","Intermediate","Advanced"];
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(null);
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const resetForm = () => {
-    setForm({
-      title: '',
-      description: '',
-      price: 0,
-      image: '',
-      category: 'Web Development',
-      level: 'Beginner',
-      duration: '',
-      lessons: 0,
-      rating: 4.8,
-      featured: false,
-    });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      await api.post('/courses', form);
-      setMessage({ type: 'success', text: 'Course added successfully!' });
-      resetForm();
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err.response?.data?.message || 'Failed to add course',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Pre-defined 15 professional courses
-  const demoCourses = [
-    {
-      title: "Complete Web Development Bootcamp 2025 – HTML, CSS, JS, React, Node.js",
-      description: "Zero to full-stack hero. Build 20+ real-world projects including e-commerce, social media clone, and admin dashboards.",
-      price: 2499,
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
-      category: "Web Development",
-      level: "Beginner",
-      duration: "48h",
-      lessons: 145,
-      rating: 4.9,
-      featured: true,
-    },
-    {
-      title: "Machine Learning A-Z 2025 – Python, TensorFlow, PyTorch & Real Projects",
-      description: "From regression to deep learning, NLP, computer vision. Includes Kaggle competitions and deployment.",
-      price: 2999,
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800",
-      category: "AI & Machine Learning",
-      level: "Intermediate",
-      duration: "56h",
-      lessons: 180,
-      rating: 4.8,
-      featured: true,
-    },
-    {
-      title: "UI/UX Design Masterclass – Figma, Adobe XD, Prototyping & Handoff",
-      description: "Learn modern design principles, user research, wireframing, high-fidelity prototypes, and developer handoff.",
-      price: 1799,
-      image: "https://images.unsplash.com/photo-1559028012-481c04fa06cb?w=800",
-      category: "UI/UX Design",
-      level: "Beginner",
-      duration: "28h",
-      lessons: 85,
-      rating: 4.7,
-    },
-    {
-      title: "Python Complete Course – From Zero to Data Science & Automation",
-      description: "Master Python basics to advanced topics: OOP, web scraping, automation, pandas, matplotlib, Flask.",
-      price: 1999,
-      image: "https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=800",
-      category: "Python",
-      level: "Beginner",
-      duration: "38h",
-      lessons: 110,
-      rating: 4.8,
-    },
-    {
-      title: "Data Science & Analytics Bootcamp – Pandas, SQL, Power BI, Tableau",
-      description: "End-to-end data analysis: cleaning, visualization, SQL queries, dashboards, storytelling with data.",
-      price: 2499,
-      image: "https://images.unsplash.com/photo-1551288049-b1f7c97a89da?w=800",
-      category: "Data Science",
-      level: "Intermediate",
-      duration: "42h",
-      lessons: 95,
-      rating: 4.7,
-    },
-    {
-      title: "Flutter & Dart – Build Beautiful iOS & Android Apps 2025",
-      description: "Cross-platform mobile development. Build 10+ apps including e-commerce, chat, and fitness tracker.",
-      price: 2299,
-      image: "https://images.unsplash.com/photo-1551650975-60cb5d9b0c83?w=800",
-      category: "Mobile Development",
-      level: "Beginner",
-      duration: "35h",
-      lessons: 90,
-      rating: 4.8,
-    },
-    {
-      title: "AWS Certified Solutions Architect – Associate 2025 (Hands-on)",
-      description: "Full AWS certification prep: VPC, EC2, S3, Lambda, RDS, IAM, CloudFormation, real-world labs.",
-      price: 3499,
-      image: "https://images.unsplash.com/photo-1516321310764-8a2380f89148?w=800",
-      category: "DevOps & Cloud",
-      level: "Intermediate",
-      duration: "40h",
-      lessons: 120,
-      rating: 4.9,
-    },
-    {
-      title: "Complete Ethical Hacking & Cybersecurity Course 2025",
-      description: "Learn penetration testing, Kali Linux, network security, web app vulnerabilities, bug bounty hunting.",
-      price: 2799,
-      image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800",
-      category: "Cybersecurity",
-      level: "Intermediate",
-      duration: "45h",
-      lessons: 130,
-      rating: 4.8,
-    },
-    {
-      title: "Blockchain & Web3 Development – Solidity, Ethereum, Smart Contracts",
-      description: "Build DApps, NFTs, DeFi protocols. Includes Hardhat, Truffle, OpenZeppelin, and testnets.",
-      price: 3199,
-      image: "https://images.unsplash.com/photo-1639762681485-8b6c3b7d8c4e?w=800",
-      category: "Blockchain",
-      level: "Advanced",
-      duration: "38h",
-      lessons: 105,
-      rating: 4.7,
-    },
-    {
-      title: "Advanced JavaScript – Deep Dive into Modern JS (ES6+)",
-      description: "Closures, prototypes, async/await, modules, performance, design patterns, and real projects.",
-      price: 1499,
-      image: "https://images.unsplash.com/photo-1555066931-bf19c9d1087f?w=800",
-      category: "Web Development",
-      level: "Intermediate",
-      duration: "22h",
-      lessons: 70,
-      rating: 4.9,
-    },
-    {
-      title: "Generative AI & Prompt Engineering Masterclass – ChatGPT, Midjourney",
-      description: "Learn to write perfect prompts, build AI apps, automate workflows, and create content at scale.",
-      price: 0,
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800",
-      category: "AI & Machine Learning",
-      level: "Beginner",
-      duration: "15h",
-      lessons: 50,
-      rating: 4.8,
-      featured: true,
-    },
-    {
-      title: "React Native Advanced – Build Real Mobile Apps 2025",
-      description: "Expo, navigation, animations, offline support, push notifications, and deployment to App Store & Play Store.",
-      price: 1999,
-      image: "https://images.unsplash.com/photo-1551650975-60cb5d9b0c83?w=800",
-      category: "Mobile Development",
-      level: "Intermediate",
-      duration: "30h",
-      lessons: 85,
-      rating: 4.7,
-    },
-    {
-      title: "DevOps Bootcamp – Docker, Kubernetes, CI/CD, AWS, Terraform",
-      description: "Automate infrastructure, deploy scalable apps, set up monitoring, and master modern DevOps tools.",
-      price: 2899,
-      image: "https://images.unsplash.com/photo-1516321310764-8a2380f89148?w=800",
-      category: "DevOps & Cloud",
-      level: "Intermediate",
-      duration: "40h",
-      lessons: 115,
-      rating: 4.8,
-    },
-    {
-      title: "Full-Stack MERN Project Course – Build 10 Real Apps",
-      description: "E-commerce, social media, chat app, job portal, blog, dashboard – complete source code included.",
-      price: 1999,
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
-      category: "Web Development",
-      level: "Intermediate",
-      duration: "50h",
-      lessons: 140,
-      rating: 4.9,
-    },
-    {
-      title: "Figma to Webflow – Design to Live Website Masterclass",
-      description: "Convert Figma designs to responsive Webflow sites. Learn interactions, CMS, animations, and SEO.",
-      price: 1599,
-      image: "https://images.unsplash.com/photo-1559028012-481c04fa06cb?w=800",
-      category: "UI/UX Design",
-      level: "Intermediate",
-      duration: "18h",
-      lessons: 55,
-      rating: 4.7,
-    },
-  ];
-
-  // Bulk add all 15 demo courses
-  const addAllDemoCourses = async () => {
-    setLoading(true);
-    setMessage(null);
-
-    try {
-      for (const course of demoCourses) {
-        await api.post('/courses', course);
-      }
-      setMessage({
-        type: 'success',
-        text: 'All 15 demo courses added successfully!',
-      });
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: 'Failed to add some courses: ' + (err.response?.data?.message || err.message),
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto p-6 md:p-10 bg-white dark:bg-gray-900 rounded-2xl shadow-xl mt-10">
-      <h1 className="text-3xl md:text-4xl font-bold mb-8 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-        Add New Course
-      </h1>
-
-      {/* Bulk Add Button */}
-      <div className="mb-10 text-center">
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={addAllDemoCourses}
-          disabled={loading}
-          className="text-lg px-10 py-4 shadow-lg hover:shadow-indigo-500/40"
-        >
-          {loading ? 'Adding 15 Courses...' : 'Add All 15 Demo Courses (Quick Setup)'}
-        </Button>
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          Use this for testing/demo. Courses will appear instantly on the Courses page.
-        </p>
-      </div>
-
-      {/* Message */}
-      {message && (
-        <div
-          className={`p-4 rounded-xl mb-8 text-center ${
-            message.type === 'success'
-              ? 'bg-green-100 text-green-800 border border-green-200'
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
-
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Course Title *</label>
-          <input
-            name="title"
-            placeholder="e.g. Advanced React & TypeScript 2025"
-            value={form.title}
-            onChange={handleChange}
-            required
-            className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description *</label>
-          <textarea
-            name="description"
-            placeholder="Detailed course description..."
-            value={form.description}
-            onChange={handleChange}
-            required
-            rows="5"
-            className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price (0 for free)</label>
-            <input
-              name="price"
-              type="number"
-              placeholder="0"
-              value={form.price}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Image URL</label>
-            <input
-              name="image"
-              placeholder="https://images.unsplash.com/..."
-              value={form.image}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category *</label>
-            <select
-              name="category"
-              value={form.category}
-              onChange={handleChange}
-              required
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            >
-              <option>Web Development</option>
-              <option>AI & Machine Learning</option>
-              <option>UI/UX Design</option>
-              <option>Python</option>
-              <option>Data Science</option>
-              <option>Mobile Development</option>
-              <option>DevOps & Cloud</option>
-              <option>Cybersecurity</option>
-              <option>Blockchain</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Level</label>
-            <select
-              name="level"
-              value={form.level}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            >
-              <option>Beginner</option>
-              <option>Intermediate</option>
-              <option>Advanced</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration (e.g. 32h)</label>
-            <input
-              name="duration"
-              placeholder="32h"
-              value={form.duration}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Lessons</label>
-            <input
-              name="lessons"
-              type="number"
-              placeholder="45"
-              value={form.lessons}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rating (0-5)</label>
-            <input
-              name="rating"
-              type="number"
-              step="0.1"
-              min="0"
-              max="5"
-              placeholder="4.8"
-              value={form.rating}
-              onChange={handleChange}
-              className="w-full p-3 border rounded-lg dark:bg-gray-800 dark:border-gray-600 dark:text-white focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-        </div>
-
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            name="featured"
-            checked={form.featured}
-            onChange={handleChange}
-            className="w-5 h-5 text-indigo-600 rounded"
-          />
-          <span className="text-gray-700 dark:text-gray-300">Mark as Featured Course</span>
-        </label>
-
-        <Button
-          type="submit"
-          variant="primary"
-          className="w-full py-4 text-lg font-semibold shadow-lg hover:shadow-indigo-500/40"
-          disabled={loading}
-        >
-          {loading ? 'Adding Course...' : 'Add Course'}
-        </Button>
-      </form>
-    </div>
-  );
+const S = {
+  label: { fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:12, color:'rgba(255,255,255,0.55)', letterSpacing:'.06em', textTransform:'uppercase', marginBottom:8, display:'block' },
+  input: { width:'100%', padding:'12px 14px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'#fff', fontFamily:"'DM Sans',sans-serif", fontSize:14, outline:'none', transition:'border .2s' },
+  card: { background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:16, padding:24 },
 };
 
-export default AddCourse;
+export default function AddCourse() {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    title:'', description:'', price:0, image:'', category:'Web Development',
+    level:'Beginner', duration:'', lessons:0, featured:false,
+  });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!user || user.role !== 'admin') {
+    navigate('/dashboard'); return null;
+  }
+
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      await api.post('/courses', form);
+      setSuccess(true);
+      setTimeout(() => navigate('/admin/courses'), 2000);
+    } catch(err) {
+      setError(err.response?.data?.message || 'Failed to create course');
+    } finally { setLoading(false); }
+  };
+
+  const focusStyle = (e) => e.target.style.borderColor = 'rgba(99,102,241,0.5)';
+  const blurStyle  = (e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+
+  if (success) return (
+    <div style={{ minHeight:'100vh', background:'#04031a', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ textAlign:'center', padding:48 }}>
+        <CheckCircle size={64} color='#34d399' style={{ margin:'0 auto 20px' }} />
+        <h2 style={{ fontFamily:"'Syne',sans-serif", fontWeight:900, fontSize:28, color:'#fff', marginBottom:8 }}>Course Created!</h2>
+        <p style={{ color:'rgba(255,255,255,0.4)', fontFamily:"'DM Sans',sans-serif" }}>Redirecting to courses list...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#04031a', fontFamily:"'DM Sans',sans-serif" }}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.2);} select option{background:#1e1b4b;color:#fff;}`}</style>
+
+      {/* Topbar */}
+      <header style={{ height:60, display:'flex', alignItems:'center', gap:16, padding:'0 24px', borderBottom:'1px solid rgba(255,255,255,0.06)', background:'rgba(6,4,28,0.8)', backdropFilter:'blur(16px)', position:'sticky', top:0, zIndex:50 }}>
+        <button onClick={() => navigate('/admin/courses')} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'rgba(255,255,255,0.6)', cursor:'pointer', padding:'7px 12px', display:'flex', alignItems:'center', gap:6, fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, transition:'all .2s' }}>
+          <ArrowLeft size={14} /> Back
+        </button>
+        <h1 style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:16, color:'#fff' }}>Add New Course</h1>
+      </header>
+
+      <div style={{ maxWidth:860, margin:'0 auto', padding:'32px 24px' }}>
+        <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:20 }}>
+
+          {/* Title + Category */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+            <div style={S.card}>
+              <label style={S.label}><BookOpen size={11} style={{ display:'inline', marginRight:5 }} />Course Title *</label>
+              <input required value={form.title} onChange={e=>set('title',e.target.value)}
+                placeholder="e.g. Complete React Developer 2025"
+                style={S.input} onFocus={focusStyle} onBlur={blurStyle} />
+            </div>
+            <div style={S.card}>
+              <label style={S.label}><Tag size={11} style={{ display:'inline', marginRight:5 }} />Category *</label>
+              <select value={form.category} onChange={e=>set('category',e.target.value)}
+                style={{ ...S.input, cursor:'pointer' }} onFocus={focusStyle} onBlur={blurStyle}>
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div style={S.card}>
+            <label style={S.label}><AlignLeft size={11} style={{ display:'inline', marginRight:5 }} />Description *</label>
+            <textarea required value={form.description} onChange={e=>set('description',e.target.value)}
+              placeholder="Describe what students will learn in this course..."
+              rows={5}
+              style={{ ...S.input, resize:'vertical', lineHeight:1.7 }}
+              onFocus={focusStyle} onBlur={blurStyle}
+            />
+          </div>
+
+          {/* Price + Level + Duration + Lessons */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14 }}>
+            {[
+              { key:'price', label:'Price (₹)', icon:DollarSign, type:'number', placeholder:'0 for free', min:0 },
+              { key:'duration', label:'Duration', icon:Clock, type:'text', placeholder:'e.g. 24h or 6 weeks' },
+              { key:'lessons', label:'No. of Lessons', icon:BarChart2, type:'number', placeholder:'45', min:0 },
+            ].map(({ key, label, icon:Icon, type, placeholder, min }) => (
+              <div key={key} style={S.card}>
+                <label style={S.label}><Icon size={11} style={{ display:'inline', marginRight:5 }} />{label}</label>
+                <input type={type} value={form[key]} onChange={e => set(key, type==='number' ? Number(e.target.value) : e.target.value)}
+                  placeholder={placeholder} min={min}
+                  style={S.input} onFocus={focusStyle} onBlur={blurStyle} />
+              </div>
+            ))}
+
+            <div style={S.card}>
+              <label style={S.label}><Star size={11} style={{ display:'inline', marginRight:5 }} />Level</label>
+              <select value={form.level} onChange={e=>set('level',e.target.value)}
+                style={{ ...S.input, cursor:'pointer' }} onFocus={focusStyle} onBlur={blurStyle}>
+                {LEVELS.map(l => <option key={l} value={l}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Image URL + Featured */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:14, alignItems:'start' }}>
+            <div style={S.card}>
+              <label style={S.label}><Image size={11} style={{ display:'inline', marginRight:5 }} />Cover Image URL</label>
+              <input value={form.image} onChange={e=>set('image',e.target.value)}
+                placeholder="https://images.unsplash.com/... (leave blank for default)"
+                style={S.input} onFocus={focusStyle} onBlur={blurStyle} />
+              {form.image && (
+                <img src={form.image} alt="preview" onError={e=>e.target.style.display='none'}
+                  style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginTop:12, border:'1px solid rgba(255,255,255,0.08)' }} />
+              )}
+            </div>
+
+            <div style={{ ...S.card, display:'flex', flexDirection:'column', gap:10, minWidth:160 }}>
+              <label style={S.label}>Options</label>
+              <label style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }}>
+                <div onClick={() => set('featured', !form.featured)}
+                  style={{ width:40, height:22, borderRadius:100, background: form.featured ? '#6366f1' : 'rgba(255,255,255,0.12)', position:'relative', transition:'background .3s', cursor:'pointer', flexShrink:0 }}>
+                  <div style={{ position:'absolute', top:3, left: form.featured ? 20 : 3, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left .3s' }} />
+                </div>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:12, color:'rgba(255,255,255,0.6)' }}>Featured Course</span>
+              </label>
+              <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)', fontFamily:"'DM Sans',sans-serif", lineHeight:1.5 }}>Featured courses appear on the homepage</p>
+            </div>
+          </div>
+
+          {/* Error */}
+          {error && (
+            <div style={{ padding:'12px 16px', borderRadius:10, background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.3)', color:'#f87171', fontFamily:"'DM Sans',sans-serif", fontSize:13 }}>
+              ⚠ {error}
+            </div>
+          )}
+
+          {/* Submit */}
+          <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
+            <button type="button" onClick={() => navigate('/admin/courses')}
+              style={{ padding:'12px 24px', borderRadius:10, background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.6)', fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, cursor:'pointer' }}>
+              Cancel
+            </button>
+            <button type="submit" disabled={loading}
+              style={{ padding:'12px 32px', borderRadius:10, background:'linear-gradient(135deg,#6366f1,#8b5cf6)', border:'none', color:'#fff', fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:14, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow:'0 6px 28px rgba(99,102,241,0.4)', display:'flex', alignItems:'center', gap:8 }}>
+              {loading ? '⏳ Creating...' : '✦ Publish Course'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
