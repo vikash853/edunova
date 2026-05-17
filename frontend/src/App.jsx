@@ -20,7 +20,7 @@ import EnrolledCourses from './pages/EnrolledCourses';
 import MyCourses      from './pages/MyCourses';
 
 // Student Dashboard (improved)
-import StudentDashboard from './pages/StudentDashboard';
+import StudentDashboard from './pages/Dashboard';
 
 // Admin — completely separate panel, no AppLayout
 import AdminPanel from './pages/admin/AdminPanel';
