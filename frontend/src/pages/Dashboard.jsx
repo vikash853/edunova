@@ -150,13 +150,20 @@ export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState('courses');
   const [testLoading, setTestLoading] = useState(null);
 
-  useEffect(() => {
-    if (!user) { navigate('/login'); return; }
-    api.get('/enrollments/my')
-      .then(r => setEnrollments(r.data || []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [user]);
+useEffect(() => {
+  if (!user) { navigate('/login'); return; }
+  
+  // Admin ko seedha admin panel pe bhejo
+  if (user.role === 'admin') {
+    navigate('/admin');
+    return;
+  }
+  
+  api.get('/enrollments/my')
+    .then(r => setEnrollments(r.data || []))
+    .catch(console.error)
+    .finally(() => setLoading(false));
+}, [user]);
 
   /* Computed stats */
   const completed   = enrollments.filter(e => (e.progress||0) >= 100);
