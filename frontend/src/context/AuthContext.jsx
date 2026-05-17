@@ -30,16 +30,20 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, []);
 
-  // FIX: throw errors instead of alert() so the calling component can show
-  // inline feedback. Never use alert() in a React app.
+
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    const { token, user } = res.data;
-    if (!token || !user) throw new Error("Invalid response from server");
-    localStorage.setItem('token', token);
-    setUser(user);
+  const res = await api.post('/auth/login', { email, password });
+  const { token, user } = res.data;
+  localStorage.setItem('token', token);
+  setUser(user);
+  
+  // Role ke hisaab se redirect
+  if (user.role === 'admin') {
+    navigate('/admin');
+  } else {
     navigate('/dashboard');
-  };
+  }
+};
 
   // FIX: role param removed entirely — backend always assigns "student"
   const register = async (name, email, password) => {
