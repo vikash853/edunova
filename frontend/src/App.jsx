@@ -1,6 +1,5 @@
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import React, { useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute     from './components/AdminRoute';
@@ -22,16 +21,14 @@ import Dashboard       from './pages/Dashboard';
 import AdminPanel      from './pages/admin/AdminPanel';
 import AddCourse       from './pages/admin/AddCourse';
 
-// /dashboard pe admin aaye to /admin pe bhejo
-function DashboardRedirect() {
+// Smart redirect — role ke hisaab se bhejo
+function RoleRedirect() {
   const { user, loading } = useContext(AuthContext);
-  if (loading) return null; // wait karo
-  if (user?.role === 'admin') return <Navigate to="/admin" replace />;
-  return (
-    <ProtectedRoute>
-      <Dashboard />
-    </ProtectedRoute>
-  );
+  if (loading) return null; // spinner mat dikhao, bas wait karo
+  if (!user)              return <Navigate to="/login"    replace />;
+  if (user.role === 'admin')      return <Navigate to="/admin"    replace />;
+  if (user.role === 'instructor') return <Navigate to="/admin"    replace />;
+  return <Dashboard />;
 }
 
 function App() {
@@ -39,7 +36,8 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          {/* Public */}
+
+          {/* ── PUBLIC ── */}
           <Route path="/"           element={<AppLayout><Landing /></AppLayout>} />
           <Route path="/courses"    element={<AppLayout><Courses /></AppLayout>} />
           <Route path="/course/:id" element={<AppLayout><CourseDetails /></AppLayout>} />
@@ -47,14 +45,18 @@ function App() {
           <Route path="/contact"    element={<AppLayout><Contact /></AppLayout>} />
           <Route path="/faculty"    element={<AppLayout><Faculty /></AppLayout>} />
 
-          {/* Auth */}
+          {/* ── AUTH ── */}
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Dashboard — admin ko /admin redirect, student ko dashboard */}
-          <Route path="/dashboard" element={<DashboardRedirect />} />
+          {/* ── DASHBOARD — role ke hisaab se redirect ── */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute studentOnly>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
 
-          {/* Student */}
+          {/* ── STUDENT ── */}
           <Route path="/profile" element={
             <ProtectedRoute><AppLayout><Profile /></AppLayout></ProtectedRoute>
           } />
@@ -68,12 +70,13 @@ function App() {
             <ProtectedRoute><CourseLecture /></ProtectedRoute>
           } />
 
-          {/* Admin */}
-          <Route path="/admin/*"        element={<AdminRoute><AdminPanel /></AdminRoute>} />
+          {/* ── ADMIN ── */}
+          <Route path="/admin/*"          element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="/admin/add-course" element={<AdminRoute><AddCourse /></AdminRoute>} />
 
-          {/* Fallback */}
+          {/* ── FALLBACK ── */}
           <Route path="*" element={<Navigate to="/" replace />} />
+
         </Routes>
       </AuthProvider>
     </Router>
